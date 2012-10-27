@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html><head></head>
+<body>
+hi
+<script type="text/javascript">
+//notes:
+// use https for socket.io
+// use http for all attempted connections except to port 443
+// this is because https always sends data instead of being silent
+// however, this will only if the same fail times exist for both wss and ws
+
+var sockets = [];
+
+var testhost = 'www.google.com';
+//var testports = ['9999', '666', '9998', '443', '8080', '8081', '5222', '80', '9999', '22', '9999'];
+//var testports = ['8080', '8081', '8082', '8083', '443', '80', '5222'];
+var testports = [8083,
+8082,
+8081,
+5906,
+5905,
+2222,
+5904,
+5903,
+5902,
+6666,
+5901,
+5900,
+13337,
+8080,
+1234,
+8000,
+443,
+5222,
+5223,
+80];
+
+function main()
+{
+	for(var i = 0; i < testports.length; i++) //wtf >
+	{
+		setTimeout(connect, i*30000, testhost+':'+testports[i]);
+	}
+}
+
+function connect(hostport)
+{
+	try
+	{
+		var socket = '';
+		socket = new WebSocket('wss://'+hostport+'/');
+
+		socket.startTime = (new Date()).getTime();
+
+		socket.onclose = function()
+		{
+			this.endTime = (new Date()).getTime();
+			this.diff = this.endTime - this.startTime;
+			if(this.diff < 300)
+			{
+				this.message = 'Open and Sending!';
+			}
+			else if(this.diff < 900)
+			{
+				this.message = 'Open but Closed on Data, or Closed';
+			}
+			else if(this.diff < 15000)
+			{
+				this.message = 'Port Closed or No Disconnect';
+			}
+			else
+			{
+				this.message = 'Stealth';
+			}
+
+			console.log('socket closed to port '+this.url+' after '+this.diff+' '+this.message);
+			this.garbage = true;
+		}
+
+		socket.onopen = function()
+		{
+			this.message = 'Connecting...';
+		}
+
+		sockets.push(socket);
+	}
+	catch(exception)
+	{
+		console.log(exception);
+	}
+}
+
+
+function showSocketStats()
+{
+	console.log('-------------------');
+	for(var i = 0, max = sockets.length; i < max; i++)
+	{
+		if(sockets[i])
+		console.log("%s %s %s %s", sockets[i].readyState, sockets[i].diff, sockets[i].url, sockets[i].message);
+	}
+}
+
+function cleanGarbage()
+{
+	for(var i = 0, max = sockets.length; i < max; i++)
+	{
+		if(sockets[i] && sockets[i].garbage)
+			sockets[i] = '';
+	}
+}
+
+
+//setInterval(cleanGarbage, 120000);
+setInterval(showSocketStats, 4400);
+
+window.onload=main;
+</script>
+</body>
+</html>
